@@ -3,6 +3,7 @@ package Sharepoint::Utils::Report::File::Text::Writer;
 use Moose;
 use Data::Dumper;
 use Carp;
+use Try::Tiny;
 
 use Sharepoint::Utils::Config::Manager;
 
@@ -127,6 +128,8 @@ sub writeFile {
 
     foreach my $record (@{$record_list}){
 
+        print Dumper $record;
+
         $ctr++;
 
         if ($ctr == 1){
@@ -140,6 +143,23 @@ sub writeFile {
             if (exists $record->{$column_name}){
 
                 my $val = $record->{$column_name};
+
+                if ($column_name eq 'Contact'){
+
+                    print Dumper $val;
+                    try {
+
+                        if (defined($val)){
+                            if (($val ne '') || (scalar(@{$val}) > 0)){
+                        
+                                $val = $self->_derive_contact_name($val);
+                            }
+                        }
+                    } catch {
+                        $self->{_logger}->warn("Could not process contact info for record :" . Dumper $record);
+                        $val = 'N/A';
+                    };
+                }
 
                 push(@{$list}, $val);
             }
@@ -168,6 +188,32 @@ sub _writeHeader {
     print OUTFILE join("\t", @{$column_name_list}) . "\n";
 }
 
+sub _derive_contact_name {
+
+    my $self = shift;
+    my ($contact_list) = @_;
+
+    print Dumper $contact_list;
+
+    my $final_contact_list = [];
+
+    foreach my $contact_lookup (@{$contact_list}){
+        
+        if (exists $contact_lookup->{value}){
+        
+            my $last_name_first_name = $contact_lookup->{value};
+        
+            push(@{$final_contact_list}, $last_name_first_name);
+        }
+        else {
+            $self->{_logger}->logconfess("key value does not exist in contact : " . Dumper $contact_lookup);
+        }
+    }
+
+    my $val = join("; ", @{$final_contact_list});
+
+    return $val;
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

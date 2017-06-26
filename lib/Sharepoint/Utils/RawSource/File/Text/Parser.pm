@@ -10,9 +10,51 @@ use JSON::Parse 'parse_json';
 use constant TRUE => 1;
 use constant FALSE => 0;
 
-my @qualified_keys_list = qw(ID Title Status Initiative Priority_x0020_From_x0020_TA_x00 Who_x0020_requested_x0020_it_x00 Estimated_x0020_time_x0020_requi Who_x0027_s_x0020_responsible_x0 Notes Expected_x0020_delivery_x0020_da Contact_x0020_name);
+my @qualified_keys_list = (
+    "ID",
+    "Title",
+    "Status",
+    "Initiative_x0020__x002d__x0020_b",
+    "Initiative",
+    "Priority_x0020_From_x0020_TA_x00",
+    "Who_x0020_requested_x0020_it_x00",
+    "Estimated_x0020_time_x0020_requi",
+    "Who_x0027_s_x0020_responsible_x0",
+    # "Notes",
+    "Expected_x0020_delivery_x0020_da",
+    "Contact_x0020_name"
+    );
 
-my @known_keys_list = qw(ID PermMask FSObjType LinkTitle Title LinkTitleNoMenu LinkFilenameNoMenu FileLeafRef Created_x0020_Date.ifnew FileRef File_x0020_Type File_x0020_Type.mapapp HTML_x0020_File_x0020_Type.File_x0020_Type.mapcon HTML_x0020_File_x0020_Type.File_x0020_Type.mapico HTML_x0020_File_x0020_Type ContentTypeId _EditMenuTableStart2 _EditMenuTableEnd Status Initiative_x0020__x002d__x0020_b Initiative TA_x0020__x002f__x0020_Fcn Priority_x0020_From_x0020_TA_x00 Who_x0020_requested_x0020_it_x00 Estimated_x0020_time_x0020_requi Who_x0027_s_x0020_responsible_x0 Notes Expected_x0020_delivery_x0020_da Contact_x0020_name);
+my @known_keys_list = (
+    "ID", 
+    "PermMask",
+    "FSObjType",
+    "LinkTitle",
+    "Title", 
+    "LinkTitleNoMenu", 
+    "LinkFilenameNoMenu",
+    "FileLeafRef",
+    "Created_x0020_Date.ifnew",
+    "FileRef",
+    "File_x0020_Type",
+    "File_x0020_Type.mapapp",
+    "HTML_x0020_File_x0020_Type.File_x0020_Type.mapcon",
+    "HTML_x0020_File_x0020_Type.File_x0020_Type.mapico",
+    "HTML_x0020_File_x0020_Type",
+    "ContentTypeId",
+    "_EditMenuTableStart2",
+    "_EditMenuTableEnd",
+    "Status",
+    "Initiative_x0020__x002d__x0020_b",
+    "Initiative",
+    "TA_x0020__x002f__x0020_Fcn",
+    "Priority_x0020_From_x0020_TA_x00",
+    "Who_x0020_requested_x0020_it_x00",
+    "Estimated_x0020_time_x0020_requi",
+    "Who_x0027_s_x0020_responsible_x0",
+    "Notes",
+    "Expected_x0020_delivery_x0020_da",
+    "Contact_x0020_name");
 
 my @translation_keys_list = (
     "ID", 
@@ -34,7 +76,7 @@ my @translation_keys_list = (
     "_EditMenuTableStart2",
     "_EditMenuTableEnd",
     "Status",
-    "Initiative_x0020__x002d__x0020_b",
+    "Initiative - business benefit",
     "Initiative",
     "TA/Function",
     "Priority Level According to TA",
@@ -46,8 +88,6 @@ my @translation_keys_list = (
     "Contact");
 
 my $translation_key_lookup = {};
-
-
 
 has 'infile' => (
     is       => 'rw',
