@@ -10,11 +10,11 @@ use JSON::Parse 'parse_json';
 use constant TRUE => 1;
 use constant FALSE => 0;
 
-my @qualified_keys = qw(ID Title Status Initiative Priority_x0020_From_x0020_TA_x00 Who_x0020_requested_x0020_it_x00 Estimated_x0020_time_x0020_requi Who_x0027_s_x0020_responsible_x0 Notes Expected_x0020_delivery_x0020_da Contact_x0020_name);
+my @qualified_keys_list = qw(ID Title Status Initiative Priority_x0020_From_x0020_TA_x00 Who_x0020_requested_x0020_it_x00 Estimated_x0020_time_x0020_requi Who_x0027_s_x0020_responsible_x0 Notes Expected_x0020_delivery_x0020_da Contact_x0020_name);
 
-my @known_keys = qw(ID PermMask FSObjType LinkTitle Title LinkTitleNoMenu LinkFilenameNoMenu FileLeafRef Created_x0020_Date.ifnew FileRef File_x0020_Type File_x0020_Type.mapapp HTML_x0020_File_x0020_Type.File_x0020_Type.mapcon HTML_x0020_File_x0020_Type.File_x0020_Type.mapico HTML_x0020_File_x0020_Type ContentTypeId _EditMenuTableStart2 _EditMenuTableEnd Status Initiative_x0020__x002d__x0020_b Initiative TA_x0020__x002f__x0020_Fcn Priority_x0020_From_x0020_TA_x00 Who_x0020_requested_x0020_it_x00 Estimated_x0020_time_x0020_requi Who_x0027_s_x0020_responsible_x0 Notes Expected_x0020_delivery_x0020_da Contact_x0020_name);
+my @known_keys_list = qw(ID PermMask FSObjType LinkTitle Title LinkTitleNoMenu LinkFilenameNoMenu FileLeafRef Created_x0020_Date.ifnew FileRef File_x0020_Type File_x0020_Type.mapapp HTML_x0020_File_x0020_Type.File_x0020_Type.mapcon HTML_x0020_File_x0020_Type.File_x0020_Type.mapico HTML_x0020_File_x0020_Type ContentTypeId _EditMenuTableStart2 _EditMenuTableEnd Status Initiative_x0020__x002d__x0020_b Initiative TA_x0020__x002f__x0020_Fcn Priority_x0020_From_x0020_TA_x00 Who_x0020_requested_x0020_it_x00 Estimated_x0020_time_x0020_requi Who_x0027_s_x0020_responsible_x0 Notes Expected_x0020_delivery_x0020_da Contact_x0020_name);
 
-my @translation_keys = (
+my @translation_keys_list = (
     "ID", 
     "PermMask", 
     "FSObjType", 
@@ -112,7 +112,7 @@ sub _load_qualified_keys {
 
     my $ctr = 0;
 
-    foreach my $key (@qualified_keys){
+    foreach my $key (@qualified_keys_list){
     
         $ctr++;
 
@@ -128,12 +128,12 @@ sub _load_known_keys {
 
     my $ctr = 0;
 
-    my $count = scalar(@known_keys);
+    my $count = scalar(@known_keys_list);
 
     for (my $i = 0; $i < $count ; $i++){
     
-        my $known_key = $known_keys[$i];
-        my $translation_key = $translation_keys[$i];
+        my $known_key = $known_keys_list[$i];
+        my $translation_key = $translation_keys_list[$i];
 
         $ctr++;
     
@@ -142,10 +142,30 @@ sub _load_known_keys {
         $self->{_translation_key_lookup}->{$known_key} = $translation_key;
     }
 
+
+    foreach my $qualified_key (@qualified_keys_list){
+
+        if (exists $self->{_translation_key_lookup}->{$qualified_key}){
+        
+            my $translated_key = $self->{_translation_key_lookup}->{$qualified_key};
+        
+            push(@{$self->{_qualified_column_name_list}}, $translated_key);
+        }
+        else {
+            $self->{_logger}->logconfess("'$qualified_key' does not exists in the translation key lookup");
+        }
+    }
+
     # print Dumper $self->{_translation_key_lookup};die;
     print "Loaded '$ctr' known keys\n";
 }
 
+sub getQualifiedColumnNameList {
+
+    my $self = shift;
+
+    return $self->{_qualified_column_name_list};
+}
 
 sub getRecordList {
 
@@ -268,6 +288,18 @@ sub _convert_to_json_records {
             if (!exists $self->{_qualified_keys_lookup}->{$key}){
         
                 delete $record->{$key};
+            }
+            else {
+                if (exists $self->{_translation_key_lookup}->{$key}){
+
+                    my $translation_key = $self->{_translation_key_lookup}->{$key};
+                    my $val = $record->{$key};
+                    delete $record->{$key};
+                    $record->{$translation_key} = $val;
+                }
+                else {
+                    $self->{_logger}->logconfess("key '$key' does not exist in the translation key lookup");
+                }
             }
         }
     }

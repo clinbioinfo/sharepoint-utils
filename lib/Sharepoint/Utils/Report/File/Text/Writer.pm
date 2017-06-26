@@ -1,6 +1,7 @@
 package Sharepoint::Utils::Report::File::Text::Writer;
 
 use Moose;
+use Data::Dumper;
 use Carp;
 
 use Sharepoint::Utils::Config::Manager;
@@ -27,6 +28,14 @@ has 'outfile' => (
     isa      => 'Str',
     writer   => 'setOutfile',
     reader   => 'getOutfile',
+    required => FALSE,
+    );
+
+has 'column_name_list' => (
+    is       => 'rw',
+    isa      => 'ArrayRef',
+    writer   => 'setColumnNameList',
+    reader   => 'getColumnNameList',
     required => FALSE,
     );
 
@@ -89,7 +98,76 @@ sub writeFile {
 
     my $self = shift;
 
+     my ($record_list) = @_;
+
+    if (!defined($record_list)){
+        $self->{_logger}->logconfess("record_list was not defined");
+    }
+
+     my $outfile = $self->getOutfile();
+    
+    if (!defined($outfile)){
+
+        my $outdir = $self->getOutdir();
+
+        $outfile = $outdir . '/' . File::Basename::basename($0) . '.txt';
+
+        $self->{_logger}->info("outfile was not defined and therefore was set to '$outfile'");
+    }
+
+    open (OUTFILE, ">$outfile") || $self->{_logger}->logconfess("Could not open '$outfile' in write mode : $!");
+ 
+
+    my $ctr = 0;
+
+    my $column_name_list = $self->getColumnNameList();
+    if (!defined($column_name_list)){
+        $self->{_logger}->logconfess("column_name_list was not defined");
+    }
+
+    foreach my $record (@{$record_list}){
+
+        $ctr++;
+
+        if ($ctr == 1){
+            $self->_writeHeader();
+        }
+
+        my $list = [];
+
+        foreach my $column_name (@{$column_name_list}){
+
+            if (exists $record->{$column_name}){
+
+                my $val = $record->{$column_name};
+
+                push(@{$list}, $val);
+            }
+            else {
+                $self->{_logger}->logconfess("column_name '$column_name' does not exist in record : " . Dumper $record);
+            }
+        }
+
+        print OUTFILE join("\t", @{$list}) . "\n";
+    }
+
+    close OUTFILE;
+
+    print "Wrote '$ctr' records to output file '$outfile'\n";  
 }
+
+sub _writeHeader {
+
+    my $self = shift;
+
+    my $column_name_list = $self->getColumnNameList();
+    if (!defined($column_name_list)){
+        $self->{_logger}->logconfess("column_name_list was not defined");
+    }
+
+    print OUTFILE join("\t", @{$column_name_list}) . "\n";
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

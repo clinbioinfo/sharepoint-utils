@@ -95,6 +95,8 @@ sub writeFile {
         $self->{_logger}->logconfess("record_list was not defined");
     }
 
+    my $count = scalar(@{$record_list});
+
     my $json_string = encode_json($record_list);
 
 
@@ -115,7 +117,7 @@ sub writeFile {
 
     close OUTFILE;
 
-    print "Wrote output file '$outfile'\n";  
+    print "Wrote '$count' records to output file '$outfile'\n";  
 }
 
 

@@ -179,6 +179,13 @@ sub generateReport {
         $self->{_logger}->logconfess("record_list was not defined");
     }
 
+    my $column_name_list = $self->{_parser}->getQualifiedColumnNameList();
+    if (!defined($column_name_list)){
+        $self->{_logger}->logconfess("column_name_list was not defined");
+    }
+
+    $self->{_report_writer}->setColumnNameList($column_name_list);
+    
     $self->{_report_writer}->writeFile($record_list);
 
     $self->{_json_writer}->writeFile($record_list);
