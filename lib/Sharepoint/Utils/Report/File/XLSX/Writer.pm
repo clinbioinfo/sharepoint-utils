@@ -1,9 +1,11 @@
-package Sharepoint::Utils::Report::File::Text::Writer;
+package Sharepoint::Utils::Report::File::XLSX::Writer;
 
 use Moose;
 use Data::Dumper;
 use Carp;
 use Try::Tiny;
+use Excel::Writer::XLSX;
+
 
 use Sharepoint::Utils::Config::Manager;
 
@@ -84,11 +86,11 @@ sub getInstance {
 
     if (!defined($instance)){
 
-        $instance = new Sharepoint::Utils::Report::File::Text::Writer(@_);
+        $instance = new Sharepoint::Utils::Report::File::XLSX::Writer(@_);
 
         if (!defined($instance)){
 
-            confess "Could not instantiate Sharepoint::Utils::Report::File::Text::Writer";
+            confess "Could not instantiate Sharepoint::Utils::Report::File::XLSX::Writer";
         }
     }
 
@@ -99,7 +101,7 @@ sub writeFile {
 
     my $self = shift;
 
-     my ($record_list) = @_;
+    my ($record_list) = @_;
 
     if (!defined($record_list)){
         $self->{_logger}->logconfess("record_list was not defined");
@@ -111,32 +113,40 @@ sub writeFile {
 
         my $outdir = $self->getOutdir();
 
-        $outfile = $outdir . '/' . File::Basename::basename($0) . '.txt';
+        $outfile = $outdir . '/' . File::Basename::basename($0) . '.xlsx';
 
         $self->{_logger}->info("outfile was not defined and therefore was set to '$outfile'");
     }
 
-    open (OUTFILE, ">$outfile") || $self->{_logger}->logconfess("Could not open '$outfile' in write mode : $!");
- 
 
-    my $ctr = 0;
+    $self->_init_workbook($outfile);
+
+    $self->_writeHeader();
 
     my $column_name_list = $self->getColumnNameList();
     if (!defined($column_name_list)){
         $self->{_logger}->logconfess("column_name_list was not defined");
     }
 
+    # my $column_count = scalar(@{$column_name_list});
+
+    # my $record_count = scalar(@{$record_list});
+
+    # for (my $row = 0; $row < $record_count ; $row++){
+
+    #     my $col = 0;
+    #     for (my $col = 0; $col < $column_count ; $col++){
+
+    #     }
+    # }
+
+    my $row = 1;
+
     foreach my $record (@{$record_list}){
 
-        print Dumper $record;
-
-        $ctr++;
-
-        if ($ctr == 1){
-            $self->_writeHeader();
-        }
-
         my $list = [];
+
+        my $col = 0;
 
         foreach my $column_name (@{$column_name_list}){
 
@@ -146,7 +156,7 @@ sub writeFile {
 
                 if ($column_name eq 'Contact'){
 
-                    print Dumper $val;
+                    # print Dumper $val;
                     try {
 
                         if (defined($val)){
@@ -161,19 +171,45 @@ sub writeFile {
                     };
                 }
 
-                push(@{$list}, $val);
+                $self->{_logger}->info("row '$row' col '$col' val '$val'");
+                $self->{_worksheet}->write($row, $col, $val);
+                $col++;
+                # push(@{$list}, $val);
             }
             else {
                 $self->{_logger}->logconfess("column_name '$column_name' does not exist in record : " . Dumper $record);
             }
         }
 
-        print OUTFILE join("\t", @{$list}) . "\n";
+        $row++;
     }
 
-    close OUTFILE;
+    $self->{_workbook}->close();
 
-    print "Wrote '$ctr' records to output file '$outfile'\n";  
+    $self->{_logger}->info("Wrote '$row' records to output file '$outfile'");
+
+    print "Wrote '$row' records to output file '$outfile'\n";  
+}
+
+sub _init_workbook {
+
+    my $self = shift;
+    my ($outfile) = @_;
+
+    ## Create the workbook
+    my $workbook = Excel::Writer::XLSX->new($outfile);
+    if (!defined($workbook)){
+        $self->{_logger}->logconfess("Could not instantiate Excel::Writer::XLSX");
+    }
+
+    $self->{_workbook} = $workbook;
+
+    my $worksheet = $workbook->add_worksheet();
+    if (!defined($worksheet)){
+        $self->{_logger}->logconfess("worksheet was not defined");
+    }
+
+    $self->{_worksheet} = $worksheet;
 }
 
 sub _writeHeader {
@@ -185,7 +221,16 @@ sub _writeHeader {
         $self->{_logger}->logconfess("column_name_list was not defined");
     }
 
-    print OUTFILE join("\t", @{$column_name_list}) . "\n";
+    my $column_count = scalar(@{$column_name_list});
+
+    for (my $col = 0; $col < $column_count ; $col++){
+
+        my $column_name = $column_name_list->[$col];
+
+        $self->{_worksheet}->write(0, $col, $column_name);
+    }
+
+    $self->{_logger}->info("Wrote column names to the worksheet");
 }
 
 sub _derive_contact_name {
@@ -224,7 +269,7 @@ __END__
 
 =head1 NAME
 
- Sharepoint::Utils::Report::File::Text::Writer
+ Sharepoint::Utils::Report::File::XLSX::Writer
 
 =head1 VERSION
 
@@ -232,9 +277,9 @@ __END__
 
 =head1 SYNOPSIS
 
- use Sharepoint::Utils::Report::File::Text::Writer;
+ use Sharepoint::Utils::Report::File::XLSX::Writer;
 
- my $writer = Sharepoint::Utils::Report::File::Text::Writer(
+ my $writer = Sharepoint::Utils::Report::File::XLSX::Writer(
    outdir      => $outdir,
    record_list => $record_list,
    outfile     => $outfile

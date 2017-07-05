@@ -20,7 +20,7 @@ my @qualified_keys_list = (
     "Who_x0020_requested_x0020_it_x00",
     "Estimated_x0020_time_x0020_requi",
     "Who_x0027_s_x0020_responsible_x0",
-    # "Notes",
+    "Notes",
     "Expected_x0020_delivery_x0020_da",
     "Contact_x0020_name"
     );

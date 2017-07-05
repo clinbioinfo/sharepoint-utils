@@ -12,6 +12,7 @@ use Sharepoint::Utils::Logger;
 use Sharepoint::Utils::Config::Manager;
 use Sharepoint::Utils::RawSource::File::Text::Parser;
 use Sharepoint::Utils::Report::File::Text::Writer;
+use Sharepoint::Utils::Report::File::XLSX::Writer;
 use Sharepoint::Utils::File::JSON::Writer;
 
 use constant TRUE  => 1;
@@ -103,6 +104,8 @@ sub BUILD {
 
     $self->_initReportWriter(@_);
 
+    $self->_initXLSXReportWriter(@_);
+
     $self->_initJSONWriter(@_);
 
     $self->{_logger}->info("Instantiated ". __PACKAGE__);
@@ -158,6 +161,20 @@ sub _initReportWriter {
     $self->{_report_writer} = $writer;
 }
 
+sub _initXLSXReportWriter {
+
+    my $self = shift;
+
+    my $writer = Sharepoint::Utils::Report::File::XLSX::Writer::getInstance(@_);
+    if (!defined($writer)){
+        $self->{_logger}->logconfess("Could not instantiate Sharepoint::Utils::Report::File::XLSX::Writer");
+    }
+
+ 
+    $self->{_xlsx_report_writer} = $writer;
+}
+
+
 sub _initJSONWriter {
 
     my $self = shift;
@@ -187,6 +204,10 @@ sub generateReport {
     $self->{_report_writer}->setColumnNameList($column_name_list);
     
     $self->{_report_writer}->writeFile($record_list);
+
+    $self->{_xlsx_report_writer}->setColumnNameList($column_name_list);
+    
+    $self->{_xlsx_report_writer}->writeFile($record_list);
 
     $self->{_json_writer}->writeFile($record_list);
 
